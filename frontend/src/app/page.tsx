@@ -1,116 +1,227 @@
-import Link from 'next/link';
+"use client";
+import React from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
-const features = [
-  {
-    icon: "M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z",
-    title: "Automated Verification",
-    desc: "Funds release automatically when a GitHub commit or IPFS hash matches the milestone requirement. Zero manual approval needed.",
-    gradient: "from-emerald-500/20 to-teal-500/20",
-    border: "border-emerald-500/20",
-    iconColor: "text-emerald-400",
-  },
-  {
-    icon: "M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6",
-    title: "Partial Disputes",
-    desc: "Don't freeze the whole payment. Dispute only the exact percentage of work left undone. Fair for both sides.",
-    gradient: "from-amber-500/20 to-orange-500/20",
-    border: "border-amber-500/20",
-    iconColor: "text-amber-400",
-  },
-  {
-    icon: "M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z",
-    title: "Portable Reputation",
-    desc: "Earn soulbound NFTs for every completed job. Build a verified, tamper-proof on-chain resume that travels with you.",
-    gradient: "from-purple-500/20 to-indigo-500/20",
-    border: "border-purple-500/20",
-    iconColor: "text-purple-400",
-  },
-];
-
-const stats = [
-  { value: "0%", label: "Platform Fees" },
-  { value: "48h", label: "Auto-Release" },
-  { value: "100%", label: "On-Chain" },
-];
-
-export default function Home() {
+/**
+ * Page: Landing (Root)
+ * Aesthetic: SecureGlow Dark — Trust & Security
+ * Purpose: Conversion & Brand Experience
+ */
+export default function LandingPage() {
   return (
-    <div className="relative">
-      {/* Background effects */}
-      <div className="absolute inset-0 gradient-bg grid-pattern opacity-50 pointer-events-none" />
+    <div className="flex flex-col gap-32">
+      {/* 1. HERO SECTION */}
+      <section className="relative py-20 overflow-hidden">
+        {/* Modern Background Glows */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--primary)] opacity-[0.08] blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-[20%] right-[-5%] w-[30%] h-[30%] bg-[var(--accent)] opacity-[0.05] blur-[100px] rounded-full pointer-events-none" />
 
-      {/* Hero */}
-      <section className="relative container mx-auto px-4 pt-24 pb-20 flex flex-col items-center text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/50 border border-border/50 text-xs font-semibold text-accent-foreground mb-8 animate-in">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          Live on Sepolia Testnet
-        </div>
-
-        <h1 className="text-5xl sm:text-7xl font-bold tracking-tight leading-[1.1] mb-6 animate-in" style={{animationDelay: '0.1s'}}>
-          Get paid for every milestone
-          <br />
-          <span className="bg-gradient-to-r from-purple-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-            — automatically
-          </span>
-        </h1>
-
-        <p className="max-w-2xl text-lg text-muted-foreground mb-12 leading-relaxed animate-in" style={{animationDelay: '0.2s'}}>
-          FairPay replaces trust with math. Programmable smart escrows, verifiable milestones,
-          and automatic releases. No platform cuts. No ghosting.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 mb-20 animate-in" style={{animationDelay: '0.3s'}}>
-          <Link
-            href="/contracts/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 h-12 px-8 glow-primary transition-all duration-300 shadow-lg"
+        <div className="flex flex-col max-w-5xl relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-4 mb-10"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Create your first contract
-          </Link>
-          <Link
-            href="/jobs"
-            className="inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold border border-border/50 bg-card/50 hover:bg-accent/50 hover:border-border h-12 px-8 transition-all duration-300"
-          >
-            Browse open jobs
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </Link>
-        </div>
+            <div className="h-[2px] w-12 bg-gradient-to-r from-[var(--primary)] to-transparent" />
+            <span className="text-[11px] font-mono font-bold text-[var(--primary-light)] uppercase tracking-[0.4em]">
+              FairPay Protocol v1.0
+            </span>
+          </motion.div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-12 animate-in" style={{animationDelay: '0.4s'}}>
-          {stats.map(s => (
-            <div key={s.label} className="text-center">
-              <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">{s.value}</div>
-              <div className="text-xs text-muted-foreground font-medium mt-0.5">{s.label}</div>
-            </div>
-          ))}
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-6xl md:text-8xl font-bold leading-[1.1] tracking-tight mb-10"
+          >
+            Escrow Built on <br />
+            <span className="text-gradient">Verifiable Trust.</span>
+          </motion.h1>
+
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl md:text-2xl font-body text-[var(--text-secondary)] leading-relaxed mb-12 max-w-3xl opacity-90"
+          >
+            Secure, multi-milestone payments for modern teams. Funds move when 
+            deliverables are verified on-chain. <span className="text-[var(--primary-light)] font-semibold">No intermediaries, total transparency.</span>
+          </motion.p>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-6"
+          >
+            <Link href="/create" className="btn-primary flex items-center gap-4 px-10 group bg-gradient-to-r from-[var(--primary)] to-[var(--primary-dark)]">
+              <span className="tracking-widest uppercase font-bold text-xs">Start a Contract</span>
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
+            <Link href="/how-it-works" className="btn-secondary px-10 border-[var(--border-light)] hover:bg-[var(--bg-elevated)] transition-all uppercase font-bold text-xs tracking-widest">
+              Explore Protocol
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="relative container mx-auto px-4 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {features.map((f, i) => (
-            <div
-              key={f.title}
-              className={`group relative rounded-2xl p-6 bg-gradient-to-b ${f.gradient} border ${f.border} hover:scale-[1.02] transition-all duration-300 animate-in`}
-              style={{animationDelay: `${0.5 + i * 0.1}s`}}
-            >
-              <div className={`w-10 h-10 rounded-xl bg-card/80 border border-border/50 flex items-center justify-center mb-4 ${f.iconColor}`}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={f.icon} />
-                </svg>
+      {/* 2. LIVE STATS BAR (Modern Glass) */}
+      <section className="py-12 border-y border-[var(--border)] relative glass-card rounded-2xl mx-[-1rem] px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+          {[
+            { label: "PROTOCOL ESCROW", val: "Ξ 234.7", color: "text-[var(--primary-light)]" },
+            { label: "VERIFIED MILESTONES", val: "2,341", color: "text-[var(--accent)]" },
+            { label: "ACTIVE ARBITRATORS", val: "148", color: "text-[var(--primary)]" },
+            { label: "DISPUTE SETTLEMENT", val: "99.7%", color: "text-[var(--accent-light)]" },
+          ].map((stat, i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <span className="text-[10px] font-mono font-bold text-[var(--text-muted)] uppercase tracking-widest">{stat.label}</span>
+              <div className="flex items-baseline gap-2">
+                <span className={`text-4xl font-bold tracking-tight ${stat.color}`}>{stat.val}</span>
               </div>
-              <h3 className="text-lg font-bold mb-2">{f.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
+
+      {/* 3. THE PROTOCOL FLOW (Modern Icons) */}
+      <section className="py-12">
+        <div className="flex flex-col gap-4 mb-20">
+          <span className="text-[11px] font-mono font-bold text-[var(--accent)] uppercase tracking-[0.4em]">System Architecture</span>
+          <h2 className="text-4xl font-bold tracking-tight uppercase">The Secure Path</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+          <div className="hidden md:block absolute top-[3rem] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-transparent via-[var(--border-light)] to-transparent" />
+          
+          {[
+            { 
+              step: "01", 
+              title: "On-Chain Commitment", 
+              desc: "Funds are locked in a singleton vault. Terms are signed by both parties at contract initialization.",
+              bg: "bg-[var(--primary)]/10 text-[var(--primary)]" 
+            },
+            { 
+              step: "02", 
+              title: "Proof of Delivery", 
+              desc: "Freelancer submits artifacts. Automated nodes verify content hashes (IPFS/Arweave).",
+              bg: "bg-[var(--accent)]/10 text-[var(--accent)]" 
+            },
+            { 
+              step: "03", 
+              title: "Instant Settlement", 
+              desc: "Upon verification, funds unlock directly. No manual invoicing or wire delays.",
+              bg: "bg-[var(--primary-light)]/10 text-[var(--primary-light)]" 
+            },
+          ].map((item, i) => (
+            <div key={i} className="flex flex-col items-center text-center px-6">
+              <div className={`w-24 h-24 rounded-2xl flex items-center justify-center mb-8 relative border border-transparent hover:border-[var(--primary)]/30 transition-all ${item.bg} shadow-lg shadow-black/40`}>
+                <span className="text-3xl font-bold font-mono">{item.step}</span>
+              </div>
+              <h3 className="text-2xl font-bold mb-4 uppercase tracking-tight">{item.title}</h3>
+              <p className="text-base text-[var(--text-secondary)] leading-relaxed opacity-80">
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. SECURITY HIGHLIGHTS */}
+      <section className="py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {[
+            { 
+              title: "Multi-Sig Arbitration", 
+              desc: "3-of-3 expert consensus for dispute resolution. Impartial, fast, and final.",
+              icon: "🛡",
+              tag: "Security v2"
+            },
+            { 
+              title: "Reputation Oracle", 
+              desc: "Build portable trust with every successful payment. Meritocracy on the ledger.",
+              icon: "💎",
+              tag: "Trust Protocol"
+            },
+            { 
+              title: "Smart Disbursement", 
+              desc: "Programmatic fund release prevents exit scams and ensures project continuity.",
+              icon: "⚙",
+              tag: "Ledger Logic"
+            },
+            { 
+              title: "Privacy First", 
+              desc: "Briefs and artifacts are encrypted. Only hashes live on the public blockchain.",
+              icon: "🔒",
+              tag: "AES Encryption"
+            },
+          ].map((f, i) => (
+            <div key={i} className="card p-10 flex flex-col gap-6 group hover:border-[var(--primary)]/40 transition-all rounded-3xl">
+               <div className="flex justify-between items-center">
+                 <span className="text-4xl">{f.icon}</span>
+                 <span className="text-[10px] font-mono font-bold text-[var(--primary-light)] border border-[var(--primary)]/20 px-4 py-1.5 rounded-lg bg-[var(--primary)]/5 uppercase">{f.tag}</span>
+               </div>
+               <div className="flex flex-col gap-2">
+                 <h4 className="text-2xl font-bold uppercase tracking-tight">{f.title}</h4>
+                 <p className="text-base text-[var(--text-secondary)] opacity-80 leading-relaxed font-body">
+                   {f.desc}
+                 </p>
+               </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. CTA SECTION */}
+      <section className="py-24 bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-primary)] rounded-3xl border border-[var(--border)] text-center relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 left-0 w-full h-full bg-grid-pattern opacity-[0.03] pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center">
+            <span className="text-[11px] font-mono font-bold text-[var(--accent)] uppercase tracking-[0.5em] mb-10">
+              Join the Decentralized Economy
+            </span>
+            <h2 className="text-5xl md:text-7xl font-bold mb-14 tracking-tight max-w-4xl uppercase">
+              Ready to secure your <br /> <span className="text-gradient">next professional sprint?</span>
+            </h2>
+            
+            <div className="flex flex-col sm:flex-row gap-8">
+               <Link href="/create" className="btn-primary px-16 py-6 text-xl font-bold uppercase tracking-widest shadow-2xl">
+                 Get Started
+               </Link>
+               <Link href="/jobs" className="btn-secondary px-16 py-6 text-xl font-bold uppercase tracking-widest border-[var(--border-light)]">
+                 Find a Job
+               </Link>
+            </div>
+        </div>
+      </section>
+
+      {/* 6. MODERN FOOTER */}
+      <footer className="py-20 border-t border-[var(--border)] flex flex-col md:flex-row justify-between items-start gap-12 text-[var(--text-muted)]">
+        <div className="flex flex-col gap-6">
+           <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-bold shadow-lg">FP</div>
+             <span className="text-2xl font-bold text-[var(--text-primary)] tracking-tighter uppercase">FAIRPAY</span>
+           </div>
+           <p className="text-sm max-w-xs opacity-70 leading-relaxed italic">
+             "The institutional standard for verifiable professional trust on the Ethereum network."
+           </p>
+        </div>
+        
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-20">
+          <div className="flex flex-col gap-6">
+            <span className="text-[10px] font-mono font-bold text-[var(--text-primary)] uppercase tracking-[0.3em]">Protocol</span>
+            <Link href="/how-it-works" className="text-sm hover:text-[var(--primary-light)] transition-colors">Architecture</Link>
+            <Link href="/create" className="text-sm hover:text-[var(--primary-light)] transition-colors">Launch a Node</Link>
+            <Link href="/arbitrate" className="text-sm hover:text-[var(--primary-light)] transition-colors">Justice Hub</Link>
+          </div>
+          <div className="flex flex-col gap-6">
+            <span className="text-[10px] font-mono font-bold text-[var(--text-primary)] uppercase tracking-[0.3em]">Resources</span>
+            <Link href="/docs" className="text-sm hover:text-[var(--primary-light)] transition-colors">Documentation</Link>
+            <Link href="https://github.com/somil71" className="text-sm hover:text-[var(--primary-light)] transition-colors">Open Source</Link>
+            <Link href="/terms" className="text-sm hover:text-[var(--primary-light)] transition-colors">Trust Terms</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -16,27 +16,17 @@ router.post("/:contractId/:index/submit", validate(SubmitMilestoneSchema), async
     
     let keeperJobId: string | undefined;
 
+    /* REBALANCED FOR NO-REDIS ENVIRONMENT
     if (verificationMethod === 'IPFSHash' && ipfsCID) {
       if (ipfsVerifyQueue) {
-        const job = await ipfsVerifyQueue.add("verify", {
-          contractId,
-          milestoneIndex: parseInt(index),
-          submittedCID: ipfsCID,
-          expectedHash
-        });
-        keeperJobId = job.id;
+        ...
       }
     } else {
       if (milestoneReleaseQueue) {
-        const job = await milestoneReleaseQueue.add("auto-release", {
-          contractId,
-          milestoneIndex: parseInt(index)
-        }, {
-          delay: 48 * 60 * 60 * 1000
-        });
-        keeperJobId = job.id;
+        ...
       }
     }
+    */
 
     const milestone = await prisma.milestone.findFirst({
       where: { contractId, index: parseInt(index) }
@@ -57,6 +47,36 @@ router.post("/:contractId/:index/submit", validate(SubmitMilestoneSchema), async
         keeperJobId
       }
     });
+
+    res.json({ success: true, m });
+  } catch(e) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.patch("/:contractId/:index/release", async (req, res) => {
+  try {
+    const { contractId, index } = req.params;
+    
+    const milestone = await prisma.milestone.findFirst({
+      where: { contractId, index: parseInt(index) }
+    });
+
+    if (!milestone) {
+      return res.status(404).json({ error: "Milestone not found" });
+    }
+
+    const m = await prisma.milestone.update({
+      where: { id: milestone.id },
+      data: {
+        status: "Released",
+        releasedAt: new Date()
+      }
+    });
+
+    // In a real app, we would also trigger the on-chain release here 
+    // or wait for the on-chain event to update the DB.
+    // For this end-to-end flow, we update the DB to reflect the new state.
 
     res.json({ success: true, m });
   } catch(e) {

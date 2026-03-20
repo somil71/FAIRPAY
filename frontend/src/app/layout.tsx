@@ -1,15 +1,12 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import Navbar from '@/components/layout/Navbar'
-import { Providers } from './providers'
-
-const inter = Inter({ subsets: ['latin'] })
+import type { Metadata } from 'next';
+import './globals.css';
+import { Providers } from './providers';
+import MainLayout from '@/components/layout/MainLayout';
 
 export const metadata: Metadata = {
-  title: 'FairPay',
-  description: 'Trustless Freelance Escrow',
-}
+  title: 'FAIRPAY // Decentralized Escrow',
+  description: 'Multi-milestone escrow on Ethereum. Funds release automatically. Disputes resolve on-chain.',
+};
 
 export default function RootLayout({
   children,
@@ -17,15 +14,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} min-h-screen bg-background text-foreground flex flex-col`}>
+    <html lang="en" className="dark scroll-smooth">
+      <body className="min-h-screen bg-[var(--void)] text-[var(--text-primary)] antialiased overflow-x-hidden selection:bg-[var(--copper-glow)] selection:text-[var(--copper-bright)]">
         <Providers>
-          <Navbar />
-          <main className="flex-1">
+          <MainLayout>
             {children}
-          </main>
+          </MainLayout>
         </Providers>
       </body>
     </html>
-  )
+  );
 }

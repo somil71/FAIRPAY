@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { useWriteContract, usePublicClient } from "wagmi";
+import { useWriteContract, usePublicClient, useAccount } from "wagmi";
 import { addresses } from "../config/constants";
-import { parseEther, decodeEventLog } from "viem";
+import { decodeEventLog } from "viem";
+import { getAddress, isAddress, parseEther, parseUnits, formatEther } from "viem";
+import { contractHelpers, ensureChecksum, validateMilestoneAmount } from "@/lib/contractHelpers";
 
 export function useCreateContract() {
   const { writeContractAsync } = useWriteContract();
+  const { address: userAddress } = useAccount();
   const publicClient = usePublicClient();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -13,11 +16,27 @@ export function useCreateContract() {
     setIsLoading(true);
     setError(null);
     try {
-      // Validate amount is positive
-      const amount = parseFloat(data.amount);
-      if (isNaN(amount) || amount <= 0) {
-        throw new Error("Total amount must be a positive number");
-      }
+      if (!userAddress) throw new Error("Wallet not connected");
+
+      // 1. Validate and convert inputs to BigInt
+      const freelancer = ensureChecksum(data.freelancer);
+      const paymentToken = ensureChecksum("0x0000000000000000000000000000000000000000");
+      const amountWei = contractHelpers.toWei(data.amount);
+      const disputeBondWei = contractHelpers.toWei("0.001"); // Fixed bond for now
+
+      const safeMilestones = data.milestones.map((m: any) => ({
+        title: m.title || "Untitled Milestone",
+        description: m.description || "",
+        paymentBps: BigInt(Math.max(0, m.paymentBps || 0)),
+        deadline: BigInt(Math.max(0, m.deadline || 0)),
+        status: 0, // PENDING
+        verificationMethod: m.verificationMethod || 0,
+        expectedHash: "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+        submittedHash: "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+        submittedAt: 0n,
+        disputedBps: 0n,
+        arbitrator: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+      }));
 
       const contractAbi = [{
         "inputs": [
@@ -63,46 +82,26 @@ export function useCreateContract() {
         "type": "event"
       }];
 
-      // Safely convert amount to Wei (always positive)
-      const amountWei = parseEther(amount.toString());
-      // Small fixed dispute bond (0.001 ETH)
-      const disputeBondWei = parseEther("0.001");
-
-      // Build milestones with safe uint256 values
-      const safeMilestones = data.milestones.map((m: any) => ({
-        title: m.title || "",
-        description: m.description || "",
-        paymentBps: BigInt(Math.max(0, Math.abs(m.paymentBps || 0))),
-        deadline: BigInt(Math.max(0, m.deadline || 0)),
-        status: 0,
-        verificationMethod: m.verificationMethod || 0,
-        expectedHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-        submittedHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-        submittedAt: BigInt(0),
-        disputedBps: BigInt(0),
-        arbitrator: "0x0000000000000000000000000000000000000000" as `0x${string}`,
-      }));
-
-      // 1. Deploy to Blockchain
+      // 2. Deploy to Blockchain
       const hash = await writeContractAsync({
-        address: addresses.FairPayEscrow as `0x${string}`,
+        address: ensureChecksum(addresses.FairPayEscrow),
         abi: contractAbi,
         functionName: "createContract",
         args: [
-          data.freelancer,
-          "0x0000000000000000000000000000000000000000",
+          freelancer,
+          paymentToken,
           amountWei,
           data.repo || "",
-          data.briefCID || "",
+          data.brief || "",
           disputeBondWei,
           safeMilestones,
         ],
         value: amountWei,
       });
 
-      // 2. Wait for confirmation and extract ID
+      // 3. Wait for receipt
       const receipt = await publicClient?.waitForTransactionReceipt({ hash });
-      let contractId = hash; // Fallback
+      let contractId = "PENDING";
 
       if (receipt) {
         for (const log of receipt.logs) {
@@ -116,29 +115,27 @@ export function useCreateContract() {
               contractId = (decoded.args as any).contractId.toString();
               break;
             }
-          } catch (e) { /* skip logs that don't match ABI */ }
+          } catch (e) { /* skip irrelevant logs */ }
         }
       }
 
-      // 3. Sync with Backend
-      const response = await fetch("/api/contracts", {
+      // 4. Update Backend
+      await fetch("/api/contracts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: contractId,
           chainId: 11155111,
-          clientAddress: data.clientAddress,
-          freelancerAddress: data.freelancer,
-          totalAmount: data.amount,
-          paymentToken: "0x0000000000000000000000000000000000000000",
+          clientAddress: ensureChecksum(userAddress),
+          freelancerAddress: freelancer,
+          totalAmount: amountWei.toString(),
+          paymentToken: paymentToken,
           githubRepo: data.repo,
-          ipfsBriefCID: data.briefCID,
+          ipfsBriefCID: data.brief,
           milestones: data.milestones
         })
       });
 
-      if (!response.ok) throw new Error("Backend sync failed");
-      
       return contractId;
     } catch (e: any) {
       setError(e);

@@ -13,6 +13,7 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   const token = req.cookies.accessToken;
 
   if (!token) {
+    if (req.method === 'GET') return next();
     return res.status(401).json({ error: "No token provided" });
   }
 

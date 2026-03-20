@@ -1,35 +1,38 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { contractHelpers } from "@/lib/contractHelpers";
 
-export default function CountdownTimer({ deadline }: { deadline: number }) {
-  const [timeLeft, setTimeLeft] = useState("");
-  const [isWarning, setIsWarning] = useState(false);
+interface CountdownTimerProps {
+  submittedAt: bigint;
+}
+
+export default function CountdownTimer({ submittedAt }: CountdownTimerProps) {
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   useEffect(() => {
-    const int = setInterval(() => {
-      const now = Date.now();
-      const diff = deadline - now;
-      if (diff <= 0) {
-        setTimeLeft("00:00:00 (Auto-release Available)");
-        setIsWarning(true);
-        clearInterval(int);
-        return;
-      }
-      setIsWarning(diff < 12 * 3600000); // red pulse if < 12h
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
-    }, 1000);
-    return () => clearInterval(int);
-  }, [deadline]);
+    const update = () => {
+      setTimeLeft(contractHelpers.secondsUntilRelease(submittedAt));
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [submittedAt]);
+
+  const hours = Math.floor(timeLeft / 3600);
+  const minutes = Math.floor((timeLeft % 3600) / 60);
+  const seconds = timeLeft % 60;
+
+  const colorClass = 
+    hours >= 24 ? "text-[var(--accent-success)]" :
+    hours >= 6 ? "text-[var(--accent-warning)]" :
+    "text-[var(--accent-danger)] animate-pulse";
 
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="font-semibold text-muted-foreground uppercase text-xs tracking-wider">Time window</span>
-      <span className={`font-mono bg-background px-2.5 py-1 rounded border shadow-inner font-bold ${isWarning ? 'text-destructive animate-pulse' : 'text-pending'}`}>
-        {timeLeft}
-      </span>
+    <div className={`font-mono text-xs font-bold tracking-widest flex items-center gap-2 ${colorClass}`}>
+      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      {hours}H {minutes}M {seconds}S
     </div>
   );
 }
