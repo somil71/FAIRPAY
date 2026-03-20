@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:4000
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=postgres://fairpay:fairpay@postgres:5432/fairpay
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["npm", "run", "worker"]
+    environment:
+      - DATABASE_URL=postgres://fairpay:fairpay@postgres:5432/fairpay
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - backend
+      - redis
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=fairpay
+      - POSTGRES_PASSWORD=fairpay
+      - POSTGRES_DB=fairpay
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fairpay"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:

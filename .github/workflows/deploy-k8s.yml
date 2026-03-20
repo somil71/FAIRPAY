@@ -1,0 +1,22 @@
+name: Deploy to K8s
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'k8s/**'
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+    - name: Configure kubeconfig
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+    - name: Apply manifests
+      run: kubectl apply -f k8s/ --recursive

@@ -1,0 +1,13 @@
+version: '3.8'
+# Compose override for production
+services:
+  frontend:
+    restart: always
+  backend:
+    restart: always
+  worker:
+    restart: always
+  postgres:
+    restart: always
+  redis:
+    restart: always

@@ -1,0 +1,19 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and Push Docker Image
+        run: |
+          echo "Building frontend image..."
+          # docker build -t ghcr.io/username/fairpay-frontend:latest ./frontend
+          # echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          # docker push ghcr.io/username/fairpay-frontend:latest

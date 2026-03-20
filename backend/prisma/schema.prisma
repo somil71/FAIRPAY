@@ -1,0 +1,107 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Contract {
+  id              String      @id
+  chainId         Int
+  clientAddress   String
+  freelancerAddress String
+  totalAmount     String
+  paymentToken    String
+  status          String
+  githubRepo      String?
+  ipfsBriefCID    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  milestones      Milestone[]
+  disputes        Dispute[]
+}
+
+model Milestone {
+  id              String      @id @default(cuid())
+  contractId      String
+  contract        Contract    @relation(fields: [contractId], references: [id])
+  index           Int
+  title           String
+  status          String
+  paymentBps      Int
+  submittedAt     DateTime?
+  windowDeadline  DateTime?
+  releasedAt      DateTime?
+  deliverableHash String?
+  githubCommit    String?
+  ipfsCID         String?
+  keeperJobId     String?
+
+  @@unique([contractId, index], name: "contractId_index")
+}
+
+model Dispute {
+  id              String      @id @default(cuid())
+  contractId      String
+  contract        Contract    @relation(fields: [contractId], references: [id])
+  milestoneIndex  Int
+  raisedBy        String
+  disputedBps     Int
+  arbitratorAddress String?
+  resolvedAt      DateTime?
+  freelancerAwardBps Int?
+  evidenceIPFSCID String?
+  createdAt       DateTime    @default(now())
+}
+
+model ReputationCache {
+  address         String      @id
+  score           Int
+  totalContracts  Int
+  onTimeCount     Int
+  disputeCount    Int
+  cachedAt        DateTime    @default(now())
+}
+
+model WebhookEvent {
+  id              String      @id @default(cuid())
+  source          String
+  deliveryId      String      @unique
+  payload         Json
+  processed       Boolean     @default(false)
+  contractId      String?
+  milestoneIndex  Int?
+  processedAt     DateTime?
+  createdAt       DateTime    @default(now())
+}
+
+model Job {
+  id              String   @id @default(cuid())
+  clientAddress   String                         // wallet that posted
+  title           String
+  description     String
+  workType        String                         // Design, Dev, Writing, etc
+  budgetMin       Float
+  budgetMax       Float
+  milestoneCount  Int
+  deadline        DateTime
+  templateId      Int?                           // optional TemplateRegistry ref
+  status          String   @default("open")      // open | filled | cancelled
+  createdAt       DateTime @default(now())
+  bids            Bid[]
+}
+
+model Bid {
+  id              String   @id @default(cuid())
+  jobId           String
+  job             Job      @relation(fields: [jobId], references: [id])
+  freelancerAddress String
+  proposedAmount  Float
+  coverNote       String
+  bondTxHash      String?                        // on-chain bond tx (optional for MVP)
+  status          String   @default("pending")   // pending | accepted | rejected
+  createdAt       DateTime @default(now())
+}
