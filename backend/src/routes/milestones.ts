@@ -32,8 +32,17 @@ router.post("/:contractId/:index/submit", validate(SubmitMilestoneSchema), async
       where: { contractId, index: parseInt(index) }
     });
 
+    console.log(`[Milestone Submit] lookup: contract=${contractId}, index=${index}, found=${!!milestone}`);
+
     if (!milestone) {
-      return res.status(404).json({ error: "Milestone not found" });
+      // Diagnostic: Check if contract exists at all
+      const contract = await prisma.contract.findUnique({ where: { id: contractId } });
+      console.log(`[Milestone Submit] contract exists check: ${!!contract}`);
+      
+      return res.status(404).json({ 
+        error: "Milestone not found", 
+        details: `Searched for contract ${contractId} and index ${index}. Contract exists: ${!!contract}` 
+      });
     }
 
     const m = await prisma.milestone.update({

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import AmountDisplay from "@/components/shared/AmountDisplay";
 import EscrowFlowAnimation from "@/components/shared/EscrowFlowAnimation";
@@ -13,17 +13,25 @@ import { formatEther } from "viem";
  * Strategy: Integrated high-fidelity modules with live data from the store.
  */
 export default function Dashboard() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { 
     contracts, 
     currentUser, 
     isDemoMode, 
     approveAndRelease, 
     optimizeSettlement,
+    fetchContracts,
     txPending 
   } = useAppStore();
   
   const [role, setRole] = useState<"client" | "freelancer">("client");
+
+  // Fetch contracts from the real backend when wallet is connected
+  useEffect(() => {
+    if (isConnected && address) {
+      fetchContracts(address);
+    }
+  }, [isConnected, address, fetchContracts]);
 
   if (!isConnected) {
     return (

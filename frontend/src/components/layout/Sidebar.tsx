@@ -36,7 +36,11 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { address, isConnected } = useAccount();
   const isDemoMode = useAppStore(s => s.isDemoMode);
+  const backendOnline = useAppStore(s => s.backendConnected);
   const { disconnect } = useDisconnect();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[260px] bg-[var(--bg-deep)] border-r border-[var(--border-subtle)] flex flex-col z-50">
@@ -55,11 +59,23 @@ export default function Sidebar() {
              Decentralized Escrow
           </span>
         </Link>
+        {mounted && !backendOnline && (
+          <div className="mt-4 flex items-center gap-2 p-2 bg-[var(--danger)]/10 border border-[var(--danger)]/20 rounded-lg">
+             <div className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
+             <span className="text-[9px] font-mono font-bold text-[var(--danger)] tracking-widest uppercase">
+               OFFLINE MODE
+             </span>
+          </div>
+        )}
       </div>
 
       {/* Wallet Status / Identity */}
       <div className="p-6 border-b border-[var(--border)] bg-[var(--bg-secondary)]/50">
-        {isConnected ? (
+        {!mounted ? (
+          <div className="flex flex-col gap-2">
+             <span className="text-[8px] font-mono font-bold text-[var(--text-muted)] tracking-widest uppercase mb-1">Loading...</span>
+          </div>
+        ) : isConnected ? (
           <div className="flex flex-col gap-4">
              <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono font-bold text-[var(--text-muted)] tracking-widest uppercase">Identity Link</span>
@@ -72,6 +88,10 @@ export default function Sidebar() {
                 <span className="text-[11px] font-mono text-[var(--primary-light)] font-bold mt-2">
                   Ξ 1.240 <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest">Available</span>
                 </span>
+             </div>
+             <div className="flex items-center gap-2 mt-1 pt-2 border-t border-[var(--border)]/30">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_6px_rgba(34,197,94,0.4)] animate-pulse" />
+                <span className="text-[9px] font-mono font-bold text-[var(--text-muted)] uppercase tracking-widest">Sepolia Connected</span>
              </div>
           </div>
         ) : (

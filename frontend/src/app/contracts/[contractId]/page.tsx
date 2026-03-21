@@ -8,6 +8,7 @@ import { useAppStore } from "@/store/appStore";
 import { useAccount } from "wagmi";
 import { Badge } from "@/components/ui/Badge";
 import { formatEther } from "viem";
+import { IPFSUpload } from "@/components/shared/IPFSUpload";
 
 export default function ContractDetail() {
   const params = useParams();
@@ -15,6 +16,10 @@ export default function ContractDetail() {
   const contractId = params?.contractId as string;
   const { address } = useAccount();
   const { contracts, approveAndRelease, submitMilestone, txPending, ensureDemoContract, isDemoMode } = useAppStore();
+  const [submittingMilestone, setSubmittingMilestone] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
   
   const contract = contracts.find(c => c.id === contractId);
 
@@ -154,23 +159,43 @@ export default function ContractDetail() {
                      </div>
 
                      <div className="flex gap-4">
-                        {m.status === 'SUBMITTED' && isClient && (
+                        {m.status === 'SUBMITTED' && mounted && (isDemoMode || address) && (
                            <button 
                              disabled={txPending}
-                             onClick={() => approveAndRelease(contractId, m.id)}
+                             onClick={() => approveAndRelease(contractId, m.index)}
                              className="btn-primary py-3 px-10 shadow-xl hover:shadow-[var(--glow-primary)] transition-all font-bold"
                            >
                              Approve & Release
                            </button>
                         )}
-                        {m.status === 'PENDING' && isFreelancer && (
-                           <button 
-                             disabled={txPending}
-                             onClick={() => submitMilestone(contractId, m.id, 'Qm' + Math.random().toString(36).substr(2, 12), 'IPFS')}
-                             className="btn-primary py-3 px-10 shadow-xl hover:shadow-[var(--glow-primary)] transition-all font-bold"
-                           >
-                             Submit Work
-                           </button>
+                        {m.status === 'PENDING' && mounted && (isDemoMode || address) && (
+                           <div className="flex flex-col gap-4 w-full md:w-auto">
+                             {submittingMilestone === m.index ? (
+                               <div className="flex flex-col gap-4 min-w-[320px] animate-in slide-in-from-top-2">
+                                 <IPFSUpload 
+                                   label="Upload deliverable"
+                                   onUpload={({ cid }) => {
+                                     submitMilestone(contractId, m.index, cid, 'IPFSHash');
+                                     setSubmittingMilestone(null);
+                                   }}
+                                 />
+                                 <button 
+                                   onClick={() => setSubmittingMilestone(null)}
+                                   className="text-[10px] font-mono font-bold text-[var(--text-muted)] hover:text-[var(--primary)] uppercase tracking-widest text-center"
+                                 >
+                                   Cancel Upload
+                                 </button>
+                               </div>
+                             ) : (
+                               <button 
+                                 disabled={txPending}
+                                 onClick={() => setSubmittingMilestone(m.index)}
+                                 className="btn-primary py-3 px-10 shadow-xl hover:shadow-[var(--glow-primary)] transition-all font-bold"
+                               >
+                                 Submit Work
+                               </button>
+                             )}
+                           </div>
                         )}
                         {m.status === 'DISPUTED' && (
                            <Link href={`/arbitrate?id=${contractId}`} className="btn-primary py-3 px-10 bg-[var(--danger)] hover:bg-red-500 shadow-xl transition-all font-bold border-none">

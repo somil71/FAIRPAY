@@ -1,5 +1,7 @@
 import React from "react";
 import { contractHelpers } from "@/lib/contractHelpers";
+import { useEthPrice, formatUSD } from "@/hooks/useEthPrice";
+import { fromWeiString } from "@/lib/bigintUtils";
 
 interface AmountDisplayProps {
   amount: bigint | string | number;
@@ -29,6 +31,9 @@ export default function AmountDisplay({
     locked: "text-[var(--amber)]",
   };
 
+  const ethPrice = useEthPrice();
+  const wei = fromWeiString(String(amount));
+
   return (
     <div className="flex flex-col">
       {label && (
@@ -40,10 +45,11 @@ export default function AmountDisplay({
         <span className="opacity-70 text-xs text-[var(--text-secondary)]">Ξ</span>
         <span className="tracking-tight">{formatted}</span>
       </div>
-      {/* Muted USD estimate for reference */}
-      <span className="text-[9px] font-mono text-[var(--text-muted)] mt-1 tracking-tight">
-        EST_VAL: ${(parseFloat(formatted) * 2500).toLocaleString()} USD
-      </span>
+      {ethPrice > 0 && (
+        <span className="text-[9px] font-mono text-[var(--text-muted)] mt-1 tracking-tight">
+          {formatUSD(wei, ethPrice)}
+        </span>
+      )}
     </div>
   );
 }

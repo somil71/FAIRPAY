@@ -1,62 +1,101 @@
-"use client";
-import React, { useState } from "react";
+'use client';
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import AmountDisplay from "@/components/shared/AmountDisplay";
+import { formatEther }  from 'viem';
+import { api, ApiError } from '@/lib/api';
+import { fromWeiString } from '@/lib/bigintUtils';
+import { useAppStore }   from '@/store/appStore';
+import { useAccount } from 'wagmi';
 
-interface Job {
-  id: string;
-  title: string;
-  client: string;
-  amount: bigint;
-  category: string;
-  tags: string[];
+interface ApiJob {
+  id:          string;
+  title:       string;
+  category:    string;
   description: string;
-  deadline: string;
+  skills:      string[];
+  budgetWei:   string;
+  bondWei:     string;
+  deadline:    string;
+  bidCount:    number;
+  status:      string;
+  client: {
+    address:     string;
+    displayName: string | null;
+  };
+  createdAt: string;
 }
 
-const MOCK_JOBS: Job[] = [
-  {
-    id: "J001",
-    title: "Full-Stack_dApp_Architecture",
-    client: "0x35d4...1D44",
-    amount: 12000000000000000000n, // 12 ETH
-    category: "DEVELOPMENT",
-    tags: ["REACT", "SOLIDITY", "NEXT.JS"],
-    description: "Architect and implement a high-performance escrow dashboard with real-time on-chain event listeners. Must follow Financial Noir guidelines.",
-    deadline: "2026-04-15",
-  },
-  {
-    id: "J002",
-    title: "Smart_Contract_Audit_v2",
-    client: "0x8e2a...9f10",
-    amount: 5000000000000000000n, // 5 ETH
-    category: "SECURITY",
-    tags: ["AUDIT", "SLITHER", "SECURITY"],
-    description: "Security audit for the FairPay Escrow Protocol. Focus on re-entrancy, cross-contract calls, and gas optimizations.",
-    deadline: "2026-03-30",
-  },
-  {
-    id: "J003",
-    title: "UI_UX_Sprint_Marketing",
-    client: "0x2b3c...4d5e",
-    amount: 2500000000000000000n, // 2.5 ETH
-    category: "DESIGN",
-    tags: ["FIGMA", "MOTION", "LANDING"],
-    description: "High-fidelity landing page design for a decentralized justice module. Theme: SecureGlow Dark.",
-    deadline: "2026-04-05",
-  },
-];
-
 export default function JobBoard() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [jobs, setJobs]                   = useState<ApiJob[]>([]);
+  const [total, setTotal]                 = useState(0);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState<string | null>(null);
+  const [search, setSearch]               = useState("");
+  const [category, setCategory]           = useState("ALL");
+  const [page, setPage]                   = useState(1);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  const storeJobs      = useAppStore(s => s.jobs);
+  const backendOnline  = useAppStore(s => s.backendConnected);
+  const { isConnected } = useAccount();
 
-  const filteredJobs = MOCK_JOBS.filter(j => {
-    const matchesSearch = j.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          j.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "ALL" || j.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Reset page on filter change
+  useEffect(() => { setPage(1); }, [category, debouncedSearch]);
+
+  const fetchJobs = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const params = new URLSearchParams({ page: String(page), limit: '20' });
+    if (category !== 'ALL') params.set('category', category);
+    if (debouncedSearch)    params.set('search', debouncedSearch);
+
+    try {
+      const data = await api.get<{ jobs: ApiJob[]; total: number }>(`/api/jobs?${params}`);
+      setJobs(data.jobs);
+      setTotal(data.total);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 0) {
+        // Backend offline — fall back to store jobs
+        console.warn('[DEMO FALLBACK] Jobs: backend unreachable, using store');
+        const fallback = storeJobs
+          .filter(j => category === 'ALL' || j.category === category)
+          .filter(j => !debouncedSearch ||
+            j.title.toLowerCase().includes(debouncedSearch.toLowerCase()));
+        setJobs(fallback.map(j => ({
+          id:          j.id,
+          title:       j.title,
+          category:    j.category,
+          description: j.description,
+          skills:      j.skills,
+          budgetWei:   j.budget.toString(),
+          bondWei:     j.bondRequired.toString(),
+          deadline:    j.deadline,
+          bidCount:    j.bids,
+          status:      'OPEN',
+          client: {
+            address:     j.client.address,
+            displayName: j.client.displayName ?? null,
+          },
+          createdAt: new Date().toISOString(),
+        })));
+        setTotal(fallback.length);
+      } else {
+        setError((err as Error).message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [page, category, debouncedSearch, storeJobs]);
+
+  useEffect(() => { fetchJobs(); }, [fetchJobs]);
 
   return (
     <div className="flex flex-col gap-16 animate-in fade-in duration-700 max-w-7xl mx-auto">
@@ -73,18 +112,18 @@ export default function JobBoard() {
                <span className="text-xl">🔍</span>
              </div>
              <input
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
+               value={search}
+               onChange={(e) => setSearch(e.target.value)}
                placeholder="Search by role, tag, or protocol node..."
                className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] p-5 pl-14 rounded-2xl text-base focus:border-[var(--primary-light)] outline-none transition-all shadow-lg"
              />
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            {["ALL", "DEVELOPMENT", "DESIGN", "SECURITY", "LEGAL"].map(cat => (
+             {["ALL", "DEVELOPMENT", "DESIGN", "SECURITY", "LEGAL", "CONTENT"].map(cat => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-8 py-5 rounded-2xl font-bold text-xs tracking-widest transition-all whitespace-nowrap border ${selectedCategory === cat ? 'bg-[var(--primary)] text-white border-transparent shadow-xl' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)]/30'}`}
+                onClick={() => setCategory(cat)}
+                className={`px-8 py-5 rounded-2xl font-bold text-xs tracking-widest transition-all whitespace-nowrap border ${category === cat ? 'bg-[var(--primary)] text-white border-transparent shadow-xl' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)]/30'}`}
               >
                 {cat}
               </button>
@@ -95,14 +134,14 @@ export default function JobBoard() {
 
       {/* Results Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {filteredJobs.length > 0 ? (
-          filteredJobs.map((j) => (
+        {!loading && !error && jobs.length > 0 ? (
+          jobs.map((j) => (
             <div key={j.id} className="card p-10 flex flex-col gap-8 relative overflow-hidden group hover:border-[var(--primary)] transition-all bg-[var(--bg-secondary)] border-[var(--border)] rounded-3xl shadow-xl">
               <div className="flex justify-between items-start">
                 <span className="text-[10px] font-mono font-bold text-[var(--primary-light)] bg-[var(--primary)]/10 px-3 py-1.5 rounded-lg border border-[var(--primary)]/20 uppercase">
                   {j.category}
                 </span>
-                <span className="text-[10px] font-mono text-[var(--text-muted)] font-bold uppercase">Job ID: {j.id}</span>
+                <span className="text-[10px] font-mono text-[var(--text-muted)] font-bold uppercase">Job ID: {j.id.slice(0, 8)}</span>
               </div>
 
               <div className="flex flex-col gap-3">
@@ -115,7 +154,7 @@ export default function JobBoard() {
               </div>
 
               <div className="flex flex-wrap gap-2 mt-2">
-                {j.tags.map(t => (
+                {j.skills.map(t => (
                   <span key={t} className="text-[9px] font-mono font-bold text-[var(--text-muted)] border border-[var(--border)] px-4 py-1.5 rounded-full uppercase group-hover:border-[var(--primary)]/30 transition-colors">
                     {t}
                   </span>
@@ -126,12 +165,12 @@ export default function JobBoard() {
                  <div className="flex justify-between items-end">
                     <div className="flex flex-col gap-2">
                        <span className="text-[10px] font-mono text-[var(--text-muted)] font-bold uppercase tracking-widest pl-1">PROTOCOL_OFFER</span>
-                       <AmountDisplay amount={j.amount} size="lg" type="locked" />
+                       <AmountDisplay amount={fromWeiString(j.budgetWei)} size="lg" type="locked" />
                     </div>
                     <div className="flex flex-col items-end gap-1">
                        <span className="text-[9px] font-mono text-[var(--text-muted)] font-bold uppercase tracking-widest">DEADLINE</span>
                        <span className="text-[11px] font-mono font-bold text-[var(--text-secondary)] uppercase">
-                         {new Date(j.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                         {j.deadline} 
                        </span>
                     </div>
                  </div>
@@ -142,12 +181,21 @@ export default function JobBoard() {
               </div>
             </div>
           ))
-        ) : (
+        ) : !loading && !error && jobs.length === 0 ? (
           <div className="col-span-full h-80 flex flex-col items-center justify-center text-center gap-6 opacity-30 border-2 border-dashed border-[var(--border)] rounded-3xl">
              <span className="text-6xl">📡</span>
-             <h3 className="text-2xl font-bold tracking-tight text-[var(--text-muted)] uppercase">NO_OPPORTUNITIES_SYNCED_FOR_QUERY</h3>
+             <h3 className="text-2xl font-bold tracking-tight text-[var(--text-muted)] uppercase">No jobs match your search</h3>
+             {(search || category !== 'ALL') && (
+               <button className="btn-ghost" onClick={() => { setSearch(""); setCategory('ALL'); }}>
+                 Clear filters
+               </button>
+             )}
           </div>
-        )}
+        ) : loading ? (
+           <div className="col-span-full h-80 flex flex-col items-center justify-center text-center gap-6 opacity-50">
+             <span className="text-xl animate-pulse">Loading Opportunities...</span>
+           </div>
+        ) : null}
       </section>
 
       {/* Protocol Notice */}
@@ -160,9 +208,20 @@ export default function JobBoard() {
              "Bids submitted through the protocol are binding. Ensure your profile metadata and reputation NFTs are up-to-date for maximum trust ranking."
            </p>
         </div>
-        <Link href="/profile" className="btn-secondary px-12 py-5 font-bold tracking-widest shrink-0 shadow-lg relative z-10">
-           CONNECT_FOR_BIDS
-        </Link>
+        {!isConnected ? (
+          <div className="flex flex-col items-center gap-2">
+            <p style={{ color: 'var(--cream-muted)', fontFamily: 'var(--font-body)' }} className="text-sm">
+              Connect your wallet to submit a bid
+            </p>
+            <Link href="/profile" className="btn-secondary px-12 py-5 font-bold tracking-widest shrink-0 shadow-lg relative z-10 w-full text-center">
+              Connect Wallet
+            </Link>
+          </div>
+        ) : (
+          <Link href="/profile" className="btn-secondary px-12 py-5 font-bold tracking-widest shrink-0 shadow-lg relative z-10 text-center">
+             Manage Profile
+          </Link>
+        )}
       </aside>
     </div>
   );

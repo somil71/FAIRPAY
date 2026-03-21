@@ -8,11 +8,24 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  address             String     @id
+  displayName         String?
+  role                String     @default("CLIENT")
+  specialty           String?
+  github              String?
+  clientContracts     Contract[] @relation("ClientContracts")
+  freelancerContracts Contract[] @relation("FreelancerContracts")
+  jobs                Job[]
+}
+
 model Contract {
   id              String      @id
   chainId         Int
   clientAddress   String
+  client          User        @relation("ClientContracts", fields: [clientAddress], references: [address])
   freelancerAddress String
+  freelancer      User        @relation("FreelancerContracts", fields: [freelancerAddress], references: [address])
   totalAmount     String
   paymentToken    String
   status          String
@@ -81,13 +94,18 @@ model WebhookEvent {
 model Job {
   id              String   @id @default(cuid())
   clientAddress   String                         // wallet that posted
+  client          User     @relation(fields: [clientAddress], references: [address])
   title           String
   description     String
-  workType        String                         // Design, Dev, Writing, etc
-  budgetMin       Float
-  budgetMax       Float
-  milestoneCount  Int
-  deadline        DateTime
+  workType        String?                        // Design, Dev, Writing, etc
+  category        String
+  skills          String[]
+  budgetWei       String
+  bondWei         String
+  budgetMin       Float?
+  budgetMax       Float?
+  milestoneCount  Int?
+  deadline        String
   templateId      Int?                           // optional TemplateRegistry ref
   status          String   @default("open")      // open | filled | cancelled
   createdAt       DateTime @default(now())
@@ -99,9 +117,42 @@ model Bid {
   jobId           String
   job             Job      @relation(fields: [jobId], references: [id])
   freelancerAddress String
-  proposedAmount  Float
-  coverNote       String
+  amountWei       String
+  bondWei         String
+  message         String
   bondTxHash      String?                        // on-chain bond tx (optional for MVP)
   status          String   @default("pending")   // pending | accepted | rejected
   createdAt       DateTime @default(now())
+}
+
+model ReputationNFT {
+  id             String   @id @default(cuid())
+  tokenId        Int      @unique @default(autoincrement())
+  ownerAddress   String
+  workType       String
+  paymentTier    String   // "0-1K", "1K-5K", "5K-10K", "10K+" (bucketed for privacy)
+  onTime         Boolean  @default(true)
+  disputeCount   Int      @default(0)
+  disputedRuling Boolean  @default(false)
+  contractId     String
+  mintedAt       DateTime @default(now())
+
+  @@index([ownerAddress])
+  @@index([contractId])
+}
+
+model ArbitratorProfile {
+  id              String   @id @default(cuid())
+  address         String   @unique
+  specialty       String
+  stakedNFTId     String
+  casesResolved   Int      @default(0)
+  consensusRate   Float    @default(100.0)
+  feesEarnedWei   String   @default("0")
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([specialty])
+  @@index([isActive])
 }

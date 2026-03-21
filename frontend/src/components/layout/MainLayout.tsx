@@ -4,7 +4,6 @@ import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 import DemoPanel from "../demo/DemoPanel";
 import DemoSpotlight from "../demo/DemoSpotlight";
-import Navbar from "./Navbar";
 import { useAppStore } from "@/store/appStore";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,12 +13,12 @@ import { motion, AnimatePresence } from "framer-motion";
  * Ensures correct spacing for the offset content area.
  */
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { toasts, removeToast } = useAppStore();
+  const { toasts, removeToast, isDemoMode } = useAppStore();
 
   return (
     <div className="min-h-screen bg-[var(--bg-deep)] flex">
       {/* Visual Overlays */}
-      <DemoSpotlight />
+      <DemoSpotlight isActive={isDemoMode} />
       <DemoPanel />
 
       {/* Desktop Navigation */}
@@ -29,8 +28,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
       {/* Main Content Area */}
       <main className="flex-1 md:ml-[260px] pb-24 md:pb-8 relative flex flex-col">
-        {/* Top Navbar */}
-        <Navbar />
 
         {/* Subtle background grain or grid could go here */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-[0.03] pointer-events-none" />

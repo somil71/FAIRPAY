@@ -33,8 +33,18 @@ router.post("/", validate(CreateContractSchema), async (req, res) => {
       data: {
         id: req.body.id,
         chainId: req.body.chainId || 11155111,
-        clientAddress: req.body.clientAddress,
-        freelancerAddress: req.body.freelancerAddress,
+        client: {
+          connectOrCreate: {
+            where: { address: req.body.clientAddress.toLowerCase() },
+            create: { address: req.body.clientAddress.toLowerCase(), role: 'CLIENT' }
+          }
+        },
+        freelancer: {
+          connectOrCreate: {
+            where: { address: req.body.freelancerAddress.toLowerCase() },
+            create: { address: req.body.freelancerAddress.toLowerCase(), role: 'FREELANCER' }
+          }
+        },
         totalAmount: req.body.totalAmount,
         paymentToken: req.body.paymentToken,
         status: "Active",

@@ -53,7 +53,7 @@ export const DEMO_STEPS: DemoStep[] = [
     route: '/contracts/DEMO-001',
     highlightSelector: '.milestone-log',
     action: () => {
-      useAppStore.getState().demoSubmitMilestone('DEMO-001', 0, 'QmDemoHash1aB2c', 'ipfs');
+      useAppStore.getState().demoSubmitMilestone('DEMO-001', 0, 'QmDemoHash1aB2c', 'IPFSHash');
     },
   },
   {
@@ -70,7 +70,7 @@ export const DEMO_STEPS: DemoStep[] = [
     route: '/contracts/DEMO-001',
     highlightSelector: '.milestone-log',
     action: () => {
-      useAppStore.getState().demoSubmitMilestoneAt('DEMO-001', 1, 'QmDemoHash2xY', 'ipfs', Math.floor(Date.now()/1000) - 49*3600);
+      useAppStore.getState().demoSubmitMilestoneAt('DEMO-001', 1, 'QmDemoHash2xY', 'IPFSHash', Math.floor(Date.now()/1000) - 49*3600);
     },
   },
   {
@@ -80,7 +80,7 @@ export const DEMO_STEPS: DemoStep[] = [
     route: '/contracts/DEMO-001',
     highlightSelector: '.milestone-log',
     action: () => {
-      useAppStore.getState().demoSubmitMilestone('DEMO-001', 2, 'QmDemoHash3fin', 'ipfs');
+      useAppStore.getState().demoSubmitMilestone('DEMO-001', 2, 'QmDemoHash3fin', 'IPFSHash');
     },
   },
   {
